@@ -1,102 +1,208 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
-  <title>AI Runner Game</title>
+  <meta charset="utf-8" />
+
+  <!-- Disable zooming & double-tap zoom -->
+  <meta name="viewport"
+        content="width=device-width,
+                 initial-scale=1.0,
+                 maximum-scale=1.0,
+                 user-scalable=no"/>
+
+  <title>Runner Game</title>
+
   <style>
-    html,body { margin:0; height:100%; background:#000; font-family:Arial,Helvetica,sans-serif; }
-    #gameCanvas { display:block; margin:0 auto; background:#000; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      touch-action: manipulation;
+      overflow: hidden;
+      background: #111;
+      font-family: Arial, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #eee;
+      touch-action: none;
+    }
+
+    /* Difficulty menu */
     #difficultyMenu {
-      position:absolute; top:35%; left:50%; transform:translate(-50%,-50%);
-      background:white; padding:22px 34px; border-radius:12px; z-index:110;
-      text-align:center;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.88);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      font-size: 28px;
+      z-index: 9999;
+      text-align: center;
     }
-    #difficultyMenu button { width:140px; padding:10px; font-size:18px; margin:8px; cursor:pointer; }
+    .diffBtn {
+      padding: 14px 30px;
+      font-size: 22px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #3498db;
+      color: white;
+    }
 
-    /* Mobile Jump / Power Buttons */
-    .mobileBtn {
-      position: absolute;
-      bottom: 28px;
-      width: 110px;
-      height: 110px;
-      border-radius: 55px;
+    /* HUD */
+    #hud {
+      position: fixed;
+      top: 10px; left: 10px;
+      z-index: 10000;
+      color: #fff;
+      text-shadow: 0 0 4px black;
       font-size: 18px;
-      font-weight: bold;
-      background: rgba(255,255,255,0.85);
-      border: 3px solid #222;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.4);
-      z-index: 120;
       user-select: none;
-      display:flex; align-items:center; justify-content:center;
-    }
-    #jumpBtn { right: 24px; }
-    #powerBtn { left: 24px; }
-
-    /* Hide mobile buttons on desktop */
-    @media (pointer: fine) { .mobileBtn { display:none; } }
-
-    /* Top right UI */
-    #uiTop {
-      position:absolute; top:10px; right:12px; z-index:90; color:#000;
-      display:flex; gap:10px; align-items:center; font-weight:600;
     }
 
+    /* Game Over */
+    #gameover-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 20000;
+      text-align: center;
+      color: white;
+    }
+    #gameover-box {
+      background: #111;
+      padding: 20px;
+      border-radius: 10px;
+      min-width: 260px;
+    }
+    #restartBtn {
+      margin-top: 15px;
+      background: #2ecc71;
+      padding: 12px 20px;
+      border: none;
+      font-size: 20px;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* Mobile buttons */
+    #controls {
+      position: fixed;
+      bottom: 15px;
+      left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 15000;
+      pointer-events: none;
+    }
+    #controls button {
+      pointer-events: auto;
+      background: rgba(0,0,0,0.65);
+      padding: 10px 16px;
+      border-radius: 10px;
+      color: white;
+      border: none;
+      font-size: 20px;
+    }
+
+    /* Landscape warning */
+    #rotate-warning {
+      position: fixed;
+      inset: 0;
+      background: black;
+      color: white;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      font-size: 24px;
+      z-index: 30000;
+      text-align: center;
+    }
+
+    /* Mute button */
     #muteBtn {
-      position:absolute; top:10px; left:12px; z-index:90; 
-      padding:8px 12px; border-radius:8px; background:rgba(255,255,255,0.9); border:2px solid #222;
-      cursor:pointer;
+      position: fixed;
+      bottom: 10px; right: 10px;
+      padding: 8px 14px;
+      font-size: 16px;
+      background: rgba(255,255,255,0.7);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 15000;
     }
-
-    /* Sound unlock overlay for mobile */
-    #soundUnlock {
-      position:fixed; left:0; top:0; right:0; bottom:0;
-      display:flex; align-items:center; justify-content:center;
-      background: rgba(0,0,0,0.85); color:#fff; text-align:center; z-index:200;
-      font-size:20px; padding:20px;
-    }
-
-    /* Power-up indicators */
-    #powerIndicators {
-      position:absolute; left:12px; top:60px; z-index:95; color:#fff;
-      display:flex; flex-direction:column; gap:8px; font-size:14px;
-    }
-    .powerActive { background: rgba(255,255,255,0.9); color:#000; padding:6px 8px; border-radius:8px; }
-
   </style>
 </head>
+
 <body>
 
-  <!-- SOUND UNLOCK -->
-  <div id="soundUnlock">🔊 Tap anywhere to enable sound and controls</div>
-
-  <!-- Difficulty Menu -->
+  <!-- Difficulty Screen -->
   <div id="difficultyMenu">
-    <h2>Select Difficulty</h2>
-    <button onclick="startGame('easy')">Easy</button>
-    <button onclick="startGame('medium')">Medium</button>
-    <button onclick="startGame('hard')">Hard</button>
+    <div style="font-size:32px; margin-bottom:10px;">Select Difficulty</div>
+    <button class="diffBtn" onclick="startGame('easy')">Easy</button>
+    <button class="diffBtn" onclick="startGame('medium')">Medium</button>
+    <button class="diffBtn" onclick="startGame('hard')">Hard</button>
   </div>
 
-  <!-- Mute Button -->
-  <button id="muteBtn">Mute</button>
-
-  <!-- UI Top -->
-  <div id="uiTop">
+  <!-- HUD -->
+  <div id="hud">
     <div id="scoreDisplay">Score: 0</div>
     <div id="distanceDisplay">Distance: 0.0 m</div>
     <div id="highDisplay">High: 0.0</div>
   </div>
 
-  <!-- Power indicators (left) -->
-  <div id="powerIndicators"></div>
+  <!-- Game Canvas -->
+  <canvas id="gameCanvas" width="900" height="400"></canvas>
 
-  <!-- Canvas -->
-  <canvas id="gameCanvas" width="1200" height="500"></canvas>
+  <!-- Game Over -->
+  <div id="gameover-overlay">
+    <div id="gameover-box">
+      <div style="font-size:30px; margin-bottom:10px;">GAME OVER</div>
+      <div id="finalDistance">Distance: 0.0 m</div>
+      <div id="finalHigh">High Score: 0.0 m</div>
+      <button id="restartBtn">Restart</button>
+    </div>
+  </div>
 
-  <!-- Mobile buttons -->
-  <button id="jumpBtn" class="mobileBtn">JUMP</button>
-  <button id="powerBtn" class="mobileBtn">POWER</button>
+  <!-- Mobile Controls -->
+  <div id="controls">
+    <button id="powerBtn">Power</button>
+    <button id="jumpBtn">Jump</button>
+  </div>
+
+  <!-- Landscape Warning -->
+  <div id="rotate-warning">Please rotate your device to landscape.</div>
+
+  <!-- Mute Button (SPACE SAFE) -->
+  <button id="muteBtn" tabindex="-1">Mute</button>
 
   <script src="game.js"></script>
+
+  <!-- Orientation script -->
+  <script>
+    function checkOrientation() {
+      if (window.innerHeight > window.innerWidth) {
+        document.getElementById("rotate-warning").style.display = "flex";
+      } else {
+        document.getElementById("rotate-warning").style.display = "none";
+      }
+    }
+    addEventListener("load", checkOrientation);
+    addEventListener("resize", checkOrientation);
+    addEventListener("orientationchange", checkOrientation);
+  </script>
+
 </body>
 </html>
